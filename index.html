@@ -137,4 +137,398 @@
         <label for="ecmToggle">ECM (Employee Contribution Method)</label>
         <select id="ecmToggle" onchange="recalc()">
           <option value="auto">Auto (use ECM for non‑EVs, not for EVs)</option>
-          <option value="forceOn">
+          <option value="forceOn">Force ECM ON</option>
+          <option value="forceOff">Force ECM OFF</option>
+        </select>
+
+        <label for="evToggle">Vehicle type</label>
+        <select id="evToggle" onchange="recalc()">
+          <option value="ev">EV / FBT‑exempt eligible</option>
+          <option value="ice">Non‑EV (petrol / diesel / non‑exempt)</option>
+        </select>
+
+        <p class="muted" style="margin-top:0.6rem;">
+          Novated leases sit outside NFP caps. EVs are treated as FBT‑exempt (approximation).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lease & Running Costs -->
+  <div class="section">
+    <h2>Novated Lease & Running Costs <span class="pill">Step 2</span></h2>
+    <div class="grid">
+      <div>
+        <label for="weeklyLease">Weekly lease cost</label>
+        <input id="weeklyLease" type="number" value="0"
+               onfocus="clearAnnual()"
+               oninput="syncFromWeekly()">
+
+        <label for="leaseAmount">Annual lease cost (optional)</label>
+        <input id="leaseAmount" type="number" value="8000"
+               onfocus="clearWeekly()"
+               oninput="syncFromAnnual()">
+
+        <label for="gstFactor">GST saving factor on running costs</label>
+        <input id="gstFactor" type="number" step="0.01" value="0.10" oninput="recalc()">
+      </div>
+
+      <div>
+        <h3>Running costs inside the lease</h3>
+        <label for="leaseFuel">Fuel / charging per year</label>
+        <input id="leaseFuel" type="number" value="2500" oninput="recalc()">
+
+        <label for="leaseRego">Rego + CTP per year</label>
+        <input id="leaseRego" type="number" value="1200" oninput="recalc()">
+
+        <label for="leaseService">Servicing + tyres per year</label>
+        <input id="leaseService" type="number" value="1000" oninput="recalc()">
+
+        <label for="leaseInsurance">Insurance per year</label>
+        <input id="leaseInsurance" type="number" value="900" oninput="recalc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Car -->
+  <div class="section">
+    <h2>Your Current Car <span class="pill">Step 3</span></h2>
+    <div class="grid">
+      <div>
+        <label for="currentFuel">Fuel / charging per year</label>
+        <input id="currentFuel" type="number" value="2500" oninput="recalc()">
+
+        <label for="currentRego">Rego + CTP per year</label>
+        <input id="currentRego" type="number" value="1200" oninput="recalc()">
+      </div>
+      <div>
+        <label for="currentService">Servicing + tyres per year</label>
+        <input id="currentService" type="number" value="1000" oninput="recalc()">
+
+        <label for="currentLoan">Loan / lease repayments per year</label>
+        <input id="currentLoan" type="number" value="4000" oninput="recalc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Novated Lease – Tax & Cashflow -->
+  <div class="section">
+    <h2>Novated Lease – Tax & Cashflow</h2>
+
+    <div class="result-row">
+      <span class="result-label">Workplace caps used (general + M&E)</span>
+      <span id="capsUsed"></span>
+    </div>
+
+    <div class="result-row">
+      <span class="result-label">Annual lease cost (calculated)</span>
+      <span id="annualLease"></span>
+    </div>
+
+    <div class="result-row">
+      <span class="result-label">Running costs inside lease</span>
+      <span id="leaseRunning"></span>
+    </div>
+
+    <div class="result-row">
+      <span class="result-label">Pre‑tax deduction (after EV/ECM logic)</span>
+      <span id="preTaxDeduction"></span>
+    </div>
+
+    <div class="result-row">
+      <span class="result-label">Post‑tax contribution (ECM portion)</span>
+      <span id="postTaxContribution"></span>
+    </div>
+
+    <hr>
+
+    <div class="result-row">
+      <span class="result-label">Taxable income – no lease</span>
+      <span id="tiNo"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Total tax – no lease</span>
+      <span id="taxNo"></span>
+    </div>
+
+    <hr>
+
+    <div class="result-row">
+      <span class="result-label">Taxable income – with lease</span>
+      <span id="tiWith"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Total tax – with lease</span>
+      <span id="taxWith"></span>
+    </div>
+
+    <hr>
+
+    <div class="result-row">
+      <span class="result-label">Tax saved</span>
+      <span id="taxSaved"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">GST benefit on running costs</span>
+      <span id="gstSaved"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Real out‑of‑pocket cost (novated)</span>
+      <span id="realCost"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Net benefit (tax + GST − lease)</span>
+      <span id="netBenefit"></span>
+    </div>
+  </div>
+
+  <!-- Ownership Comparison -->
+  <div class="section">
+    <h2>Ownership Comparison</h2>
+
+    <div class="result-row">
+      <span class="result-label">Current car – total annual cost</span>
+      <span id="currentCost"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Novated lease – real annual cost</span>
+      <span id="novatedReal"></span>
+    </div>
+    <hr>
+    <div class="result-row highlight">
+      <span class="result-label">Difference (novated vs current)</span>
+      <span id="diffVsCurrent"></span>
+    </div>
+    <p class="muted">
+      Positive = novated lease is cheaper. Negative = more expensive.
+    </p>
+  </div>
+
+  <!-- Best Lease Optimiser -->
+  <div class="section">
+    <h2>Best Lease Amount – Optimiser <span class="pill">Bonus</span></h2>
+    <div class="grid">
+      <div>
+        <label for="optMin">Min annual lease to test</label>
+        <input id="optMin" type="number" value="4000">
+
+        <label for="optMax">Max annual lease to test</label>
+        <input id="optMax" type="number" value="20000">
+
+        <label for="optStep">Step size</label>
+        <input id="optStep" type="number" value="1000">
+
+        <button type="button" onclick="runOptimiser()">Run optimiser</button>
+      </div>
+      <div>
+        <div class="result-row">
+          <span class="result-label">Best lease amount (annual)</span>
+          <span id="bestLease"></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Net benefit at best lease</span>
+          <span id="bestNet"></span>
+        </div>
+        <p class="muted">
+          Uses your current inputs (EV/ECM/workplace/running costs) to find the most tax‑efficient lease amount.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function incomeTax(ti) {
+      if (ti <= 18200) return 0;
+      if (ti <= 45000) return (ti - 18200) * 0.16;
+      if (ti <= 135000) return 4288 + (ti - 45000) * 0.30;
+      if (ti <= 190000) return 31288 + (ti - 135000) * 0.37;
+      return 51638 + (ti - 190000) * 0.45;
+    }
+
+    function totalTax(ti) {
+      return incomeTax(ti) + ti * 0.02;
+    }
+
+    function fmt(x) {
+      return isNaN(x) ? '-' : '$' + x.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function clearAnnual() {
+      document.getElementById('leaseAmount').value = '';
+    }
+
+    function clearWeekly() {
+      document.getElementById('weeklyLease').value = '';
+    }
+
+    function syncFromWeekly() {
+      const w = Number(document.getElementById('weeklyLease').value);
+      if (w > 0) {
+        document.getElementById('leaseAmount').value = (w * 52).toFixed(0);
+      }
+      recalc();
+    }
+
+    function syncFromAnnual() {
+      const a = Number(document.getElementById('leaseAmount').value);
+      if (a > 0) {
+        document.getElementById('weeklyLease').value = (a / 52).toFixed(2);
+      }
+      recalc();
+    }
+
+    function getCaps(workplaceType, packCapInput, meCapInput) {
+      if (workplaceType === 'custom') {
+        return { packCap: packCapInput, meCap: meCapInput };
+      }
+      // NFP / gov / corp caps are assumed to apply to other benefits, not the novated lease
+      return { packCap: 0, meCap: 0 };
+    }
+
+    function resolveECMMode(evType, ecmSetting) {
+      if (ecmSetting === 'forceOn') return true;
+      if (ecmSetting === 'forceOff') return false;
+      // Auto: EV = no ECM, non‑EV = ECM used to eliminate FBT
+      if (evType === 'ev') return false;
+      return true;
+    }
+
+    function computeScenario(leaseOverride) {
+      const workplaceType = document.getElementById('workplaceType').value;
+      const ecmSetting = document.getElementById('ecmToggle').value;
+      const evType = document.getElementById('evToggle').value;
+
+      const salary = Number(document.getElementById('salary').value) || 0;
+      const otherIncome = Number(document.getElementById('otherIncome').value) || 0;
+
+      const packCapInput = Number(document.getElementById('packCap').value) || 0;
+      const meCapInput = Number(document.getElementById('meCap').value) || 0;
+
+      const caps = getCaps(workplaceType, packCapInput, meCapInput);
+      const packCap = caps.packCap;
+      const meCap = caps.meCap;
+
+      const weeklyLease = Number(document.getElementById('weeklyLease').value) || 0;
+      const annualLeaseInput = Number(document.getElementById('leaseAmount').value) || 0;
+
+      const gstFactor = Number(document.getElementById('gstFactor').value) || 0;
+
+      const leaseFuel = Number(document.getElementById('leaseFuel').value) || 0;
+      const leaseRego = Number(document.getElementById('leaseRego').value) || 0;
+      const leaseService = Number(document.getElementById('leaseService').value) || 0;
+      const leaseInsurance = Number(document.getElementById('leaseInsurance').value) || 0;
+
+      const currentFuel = Number(document.getElementById('currentFuel').value) || 0;
+      const currentRego = Number(document.getElementById('currentRego').value) || 0;
+      const currentService = Number(document.getElementById('currentService').value) || 0;
+      const currentLoan = Number(document.getElementById('currentLoan').value) || 0;
+
+      const leaseRunning = leaseFuel + leaseRego + leaseService + leaseInsurance;
+
+      const lease = typeof leaseOverride === 'number'
+        ? leaseOverride
+        : (weeklyLease > 0 ? weeklyLease * 52 : annualLeaseInput);
+
+      const totalIncome = salary + otherIncome;
+
+      const tiNo = totalIncome - packCap - meCap;
+      const taxNo = totalTax(tiNo);
+
+      const useECM = resolveECMMode(evType, ecmSetting);
+
+      let preTaxDeduction = 0;
+      let postTaxContribution = 0;
+
+      if (evType === 'ev') {
+        // EV: FBT‑exempt, no ECM required
+        preTaxDeduction = lease;
+        postTaxContribution = 0;
+      } else {
+        // Non‑EV: FBT applies unless ECM used
+        if (useECM) {
+          // ECM: running costs paid post‑tax, finance pre‑tax
+          const financeComponent = Math.max(lease - leaseRunning, 0);
+          preTaxDeduction = financeComponent;
+          postTaxContribution = leaseRunning;
+        } else {
+          // No ECM: whole lease pre‑tax (ignoring FBT cost for simplicity)
+          preTaxDeduction = lease;
+          postTaxContribution = 0;
+        }
+      }
+
+      const tiWith = totalIncome - packCap - meCap - preTaxDeduction;
+      const taxWith = totalTax(tiWith);
+
+      const taxSaved = taxNo - taxWith;
+
+      const gstSaved = leaseRunning * gstFactor;
+
+      const realCost = lease - taxSaved - gstSaved;
+      const netBenefit = taxSaved + gstSaved - lease;
+
+      const currentCost = currentFuel + currentRego + currentService + currentLoan;
+      const diffVsCurrent = currentCost - realCost;
+
+      return {
+        packCap, meCap, lease, leaseRunning,
+        preTaxDeduction, postTaxContribution,
+        tiNo, taxNo, tiWith, taxWith,
+        taxSaved, gstSaved, realCost, netBenefit,
+        currentCost, diffVsCurrent
+      };
+    }
+
+    function recalc() {
+      const s = computeScenario();
+
+      document.getElementById('capsUsed').textContent = fmt(s.packCap) + ' + ' + fmt(s.meCap);
+      document.getElementById('annualLease').textContent = fmt(s.lease);
+      document.getElementById('leaseRunning').textContent = fmt(s.leaseRunning);
+      document.getElementById('preTaxDeduction').textContent = fmt(s.preTaxDeduction);
+      document.getElementById('postTaxContribution').textContent = fmt(s.postTaxContribution);
+
+      document.getElementById('tiNo').textContent = fmt(s.tiNo);
+      document.getElementById('taxNo').textContent = fmt(s.taxNo);
+      document.getElementById('tiWith').textContent = fmt(s.tiWith);
+      document.getElementById('taxWith').textContent = fmt(s.taxWith);
+
+      document.getElementById('taxSaved').textContent = fmt(s.taxSaved);
+      document.getElementById('gstSaved').textContent = fmt(s.gstSaved);
+      document.getElementById('realCost').textContent = fmt(s.realCost);
+      document.getElementById('netBenefit').textContent = fmt(s.netBenefit);
+
+      document.getElementById('currentCost').textContent = fmt(s.currentCost);
+      document.getElementById('novatedReal').textContent = fmt(s.realCost);
+      document.getElementById('diffVsCurrent').textContent = fmt(s.diffVsCurrent);
+    }
+
+    function runOptimiser() {
+      const min = Number(document.getElementById('optMin').value) || 0;
+      const max = Number(document.getElementById('optMax').value) || 0;
+      const step = Number(document.getElementById('optStep').value) || 1000;
+
+      if (max <= min || step <= 0) {
+        alert('Please check optimiser range and step.');
+        return;
+      }
+
+      let bestLease = 0;
+      let bestNet = -Infinity;
+
+      for (let lease = min; lease <= max; lease += step) {
+        const s = computeScenario(lease);
+        if (s.netBenefit > bestNet) {
+          bestNet = s.netBenefit;
+          bestLease = lease;
+        }
+      }
+
+      document.getElementById('bestLease').textContent = fmt(bestLease);
+      document.getElementById('bestNet').textContent = fmt(bestNet);
+    }
+
+    recalc();
+  </script>
+</body>
+</html>
