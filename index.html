@@ -101,7 +101,7 @@
 <body>
   <h1>Novated Lease Decision Tool (Australia)</h1>
   <p class="muted">
-    Stage 3 tax rates + 2% Medicare. No offsets, HECS, or detailed FBT modelling. For guidance only, not financial advice.
+    Stage 3 tax rates + 2% Medicare. No offsets, HECS, or detailed FBT modelling. For guidance only.
   </p>
 
   <!-- Workplace & Income -->
@@ -110,7 +110,7 @@
     <div class="grid">
       <div>
         <label for="workplaceType">Workplace benefit type</label>
-        <select id="workplaceType">
+        <select id="workplaceType" onchange="recalc()">
           <option value="nfp">NFP / PBI (15,900 + 2,650 caps)</option>
           <option value="gov">Government / Health / Education (no caps)</option>
           <option value="corp">Corporate / Private (no caps)</option>
@@ -118,28 +118,24 @@
         </select>
 
         <label for="salary">Base salary (package)</label>
-        <input id="salary" type="number" value="80000" />
+        <input id="salary" type="number" value="80000" oninput="recalc()">
 
         <label for="otherIncome">Other income (shares, property, etc.)</label>
-        <input id="otherIncome" type="number" value="20000" />
+        <input id="otherIncome" type="number" value="20000" oninput="recalc()">
       </div>
 
       <div>
         <label for="packCap">Salary packaging cap (custom only)</label>
-        <input id="packCap" type="number" value="15900" />
+        <input id="packCap" type="number" value="15900" oninput="recalc()">
 
         <label for="meCap">Meals & entertainment cap (custom only)</label>
-        <input id="meCap" type="number" value="2650" />
+        <input id="meCap" type="number" value="2650" oninput="recalc()">
 
         <label for="ecmToggle">ECM (Employee Contribution Method)</label>
-        <select id="ecmToggle">
-          <option value="on">ECM ON – running costs paid post-tax</option>
+        <select id="ecmToggle" onchange="recalc()">
+          <option value="on">ECM ON – running costs post-tax</option>
           <option value="off">ECM OFF – full lease pre-tax</option>
         </select>
-
-        <p class="muted" style="margin-top:0.6rem;">
-          NFP caps are automatic. Other workplaces default to 0 unless “Custom” is selected.
-        </p>
       </div>
     </div>
   </div>
@@ -150,28 +146,32 @@
     <div class="grid">
       <div>
         <label for="weeklyLease">Weekly lease cost</label>
-        <input id="weeklyLease" type="number" value="0" />
+        <input id="weeklyLease" type="number" value="0"
+               onfocus="clearAnnual()"
+               oninput="syncFromWeekly()">
 
         <label for="leaseAmount">Annual lease cost (optional)</label>
-        <input id="leaseAmount" type="number" value="8000" />
+        <input id="leaseAmount" type="number" value="8000"
+               onfocus="clearWeekly()"
+               oninput="syncFromAnnual()">
 
         <label for="gstFactor">GST saving factor on running costs</label>
-        <input id="gstFactor" type="number" step="0.01" value="0.10" />
+        <input id="gstFactor" type="number" step="0.01" value="0.10" oninput="recalc()">
       </div>
 
       <div>
         <h3>Running costs inside the lease</h3>
-        <label for="leaseFuel">Fuel per year (inside lease)</label>
-        <input id="leaseFuel" type="number" value="2500" />
+        <label for="leaseFuel">Fuel per year</label>
+        <input id="leaseFuel" type="number" value="2500" oninput="recalc()">
 
-        <label for="leaseRego">Rego + CTP per year (inside lease)</label>
-        <input id="leaseRego" type="number" value="1200" />
+        <label for="leaseRego">Rego + CTP per year</label>
+        <input id="leaseRego" type="number" value="1200" oninput="recalc()">
 
-        <label for="leaseService">Servicing + tyres per year (inside lease)</label>
-        <input id="leaseService" type="number" value="1000" />
+        <label for="leaseService">Servicing + tyres per year</label>
+        <input id="leaseService" type="number" value="1000" oninput="recalc()">
 
-        <label for="leaseInsurance">Insurance per year (inside lease)</label>
-        <input id="leaseInsurance" type="number" value="900" />
+        <label for="leaseInsurance">Insurance per year</label>
+        <input id="leaseInsurance" type="number" value="900" oninput="recalc()">
       </div>
     </div>
   </div>
@@ -182,19 +182,17 @@
     <div class="grid">
       <div>
         <label for="currentFuel">Fuel per year</label>
-        <input id="currentFuel" type="number" value="2500" />
+        <input id="currentFuel" type="number" value="2500" oninput="recalc()">
 
         <label for="currentRego">Rego + CTP per year</label>
-        <input id="currentRego" type="number" value="1200" />
+        <input id="currentRego" type="number" value="1200" oninput="recalc()">
       </div>
       <div>
         <label for="currentService">Servicing + tyres per year</label>
-        <input id="currentService" type="number" value="1000" />
+        <input id="currentService" type="number" value="1000" oninput="recalc()">
 
         <label for="currentLoan">Loan / lease repayments per year</label>
-        <input id="currentLoan" type="number" value="4000" />
-
-        <button type="button" onclick="recalc()">Calculate</button>
+        <input id="currentLoan" type="number" value="4000" oninput="recalc()">
       </div>
     </div>
   </div>
@@ -293,13 +291,13 @@
     <div class="grid">
       <div>
         <label for="optMin">Min annual lease to test</label>
-        <input id="optMin" type="number" value="4000" />
+        <input id="optMin" type="number" value="4000">
 
         <label for="optMax">Max annual lease to test</label>
-        <input id="optMax" type="number" value="20000" />
+        <input id="optMax" type="number" value="20000">
 
         <label for="optStep">Step size</label>
-        <input id="optStep" type="number" value="1000" />
+        <input id="optStep" type="number" value="1000">
 
         <button type="button" onclick="runOptimiser()">Run optimiser</button>
       </div>
@@ -313,156 +311,4 @@
           <span id="bestNet"></span>
         </div>
         <p class="muted">
-          Optimiser uses your current inputs (workplace, income, running costs, ECM) and tests different lease amounts.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    function incomeTax(ti) {
-      if (ti <= 18200) return 0;
-      if (ti <= 45000) return (ti - 18200) * 0.16;
-      if (ti <= 135000) return 4288 + (ti - 45000) * 0.30;
-      if (ti <= 190000) return 31288 + (ti - 135000) * 0.37;
-      return 51638 + (ti - 190000) * 0.45;
-    }
-
-    function totalTax(ti) {
-      return incomeTax(ti) + ti * 0.02;
-    }
-
-    function fmt(x) {
-      return isNaN(x) ? '-' : '$' + x.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    }
-
-    function getCaps(workplaceType, packCapInput, meCapInput) {
-      if (workplaceType === 'nfp') {
-        return { packCap: 15900, meCap: 2650 };
-      }
-      if (workplaceType === 'custom') {
-        return { packCap: packCapInput, meCap: meCapInput };
-      }
-      return { packCap: 0, meCap: 0 };
-    }
-
-    function computeScenario(leaseOverride) {
-      const workplaceType = document.getElementById('workplaceType').value;
-      const ecm = document.getElementById('ecmToggle').value;
-
-      const salary = Number(document.getElementById('salary').value) || 0;
-      const otherIncome = Number(document.getElementById('otherIncome').value) || 0;
-
-      const packCapInput = Number(document.getElementById('packCap').value) || 0;
-      const meCapInput = Number(document.getElementById('meCap').value) || 0;
-
-      const caps = getCaps(workplaceType, packCapInput, meCapInput);
-      const packCap = caps.packCap;
-      const meCap = caps.meCap;
-
-      const weeklyLease = Number(document.getElementById('weeklyLease').value) || 0;
-      const annualLeaseInput = Number(document.getElementById('leaseAmount').value) || 0;
-
-      const gstFactor = Number(document.getElementById('gstFactor').value) || 0;
-
-      const leaseFuel = Number(document.getElementById('leaseFuel').value) || 0;
-      const leaseRego = Number(document.getElementById('leaseRego').value) || 0;
-      const leaseService = Number(document.getElementById('leaseService').value) || 0;
-      const leaseInsurance = Number(document.getElementById('leaseInsurance').value) || 0;
-
-      const currentFuel = Number(document.getElementById('currentFuel').value) || 0;
-      const currentRego = Number(document.getElementById('currentRego').value) || 0;
-      const currentService = Number(document.getElementById('currentService').value) || 0;
-      const currentLoan = Number(document.getElementById('currentLoan').value) || 0;
-
-      const leaseRunning = leaseFuel + leaseRego + leaseService + leaseInsurance;
-
-      const lease = typeof leaseOverride === 'number'
-        ? leaseOverride
-        : (weeklyLease > 0 ? weeklyLease * 52 : annualLeaseInput);
-
-      const totalIncome = salary + otherIncome;
-
-      const tiNo = totalIncome - packCap - meCap;
-      const taxNo = totalTax(tiNo);
-
-      let preTaxDeduction;
-      if (ecm === 'on') {
-        preTaxDeduction = Math.max(lease - leaseRunning, 0);
-      } else {
-        preTaxDeduction = lease;
-      }
-
-      const tiWith = totalIncome - packCap - meCap - preTaxDeduction;
-      const taxWith = totalTax(tiWith);
-
-      const taxSaved = taxNo - taxWith;
-
-      const gstSaved = leaseRunning * gstFactor;
-
-      const realCost = lease - taxSaved - gstSaved;
-      const netBenefit = taxSaved + gstSaved - lease;
-
-      const currentCost = currentFuel + currentRego + currentService + currentLoan;
-      const diffVsCurrent = currentCost - realCost;
-
-      return {
-        packCap, meCap, lease, leaseRunning, preTaxDeduction,
-        tiNo, taxNo, tiWith, taxWith,
-        taxSaved, gstSaved, realCost, netBenefit,
-        currentCost, diffVsCurrent
-      };
-    }
-
-    function recalc() {
-      const s = computeScenario();
-
-      document.getElementById('capsUsed').textContent = fmt(s.packCap) + ' + ' + fmt(s.meCap);
-      document.getElementById('annualLease').textContent = fmt(s.lease);
-      document.getElementById('leaseRunning').textContent = fmt(s.leaseRunning);
-      document.getElementById('preTaxDeduction').textContent = fmt(s.preTaxDeduction);
-
-      document.getElementById('tiNo').textContent = fmt(s.tiNo);
-      document.getElementById('taxNo').textContent = fmt(s.taxNo);
-      document.getElementById('tiWith').textContent = fmt(s.tiWith);
-      document.getElementById('taxWith').textContent = fmt(s.taxWith);
-
-      document.getElementById('taxSaved').textContent = fmt(s.taxSaved);
-      document.getElementById('gstSaved').textContent = fmt(s.gstSaved);
-      document.getElementById('realCost').textContent = fmt(s.realCost);
-      document.getElementById('netBenefit').textContent = fmt(s.netBenefit);
-
-      document.getElementById('currentCost').textContent = fmt(s.currentCost);
-      document.getElementById('novatedReal').textContent = fmt(s.realCost);
-      document.getElementById('diffVsCurrent').textContent = fmt(s.diffVsCurrent);
-    }
-
-    function runOptimiser() {
-      const min = Number(document.getElementById('optMin').value) || 0;
-      const max = Number(document.getElementById('optMax').value) || 0;
-      const step = Number(document.getElementById('optStep').value) || 1000;
-
-      if (max <= min || step <= 0) {
-        alert('Please check optimiser range and step.');
-        return;
-      }
-
-      let bestLease = 0;
-      let bestNet = -Infinity;
-
-      for (let lease = min; lease <= max; lease += step) {
-        const s = computeScenario(lease);
-        if (s.netBenefit > bestNet) {
-          bestNet = s.netBenefit;
-          bestLease = lease;
-        }
-      }
-
-      document.getElementById('bestLease').textContent = fmt(bestLease);
-      document.getElementById('bestNet').textContent = fmt(bestNet);
-    }
-
-    recalc();
-  </script>
-</body>
-</html>
+          Optim
