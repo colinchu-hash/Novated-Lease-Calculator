@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Novated Lease Tax Saver (Australia)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.6rem; margin-bottom: 0.5rem; }
+    .section { margin: 1.5rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; }
+    label { display: block; margin: 0.4rem 0 0.1rem; font-weight: 600; }
+    input { width: 100%; padding: 0.35rem; box-sizing: border-box; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .result-row { display: flex; justify-content: space-between; margin: 0.2rem 0; }
+    .result-label { font-weight: 600; }
+    .muted { color: #666; font-size: 0.9rem; }
+    button { margin-top: 0.8rem; padding: 0.5rem 1rem; cursor: pointer; }
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Novated Lease Tax Saver (Australia)</h1>
+  <p class="muted">Rough modelling only – resident tax rates with Stage 3 cuts and 2% Medicare. No offsets, HECS, etc.</p>
+
+  <div class="section">
+    <h2>Inputs</h2>
+    <div class="grid">
+      <div>
+        <label for="salary">Base salary (package)</label>
+        <input id="salary" type="number" value="80000" />
+
+        <label for="otherIncome">Other income (shares, property, etc.)</label>
+        <input id="otherIncome" type="number" value="20000" />
+
+        <label for="packCap">Salary packaging cap</label>
+        <input id="packCap" type="number" value="15900" />
+
+        <label for="meCap">Meals & entertainment cap</label>
+        <input id="meCap" type="number" value="2650" />
+      </div>
+      <div>
+        <label for="leaseAmount">Novated lease amount (pre-tax per year)</label>
+        <input id="leaseAmount" type="number" value="8000" />
+
+        <label for="gstFactor">Approx GST saving factor on running costs</label>
+        <input id="gstFactor" type="number" step="0.01" value="0.10" />
+
+        <label for="runningShare">Share of lease that is running costs</label>
+        <input id="runningShare" type="number" step="0.01" value="0.60" />
+
+        <button type="button" onclick="recalc()">Calculate</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Results</h2>
+    <div class="result-row">
+      <span class="result-label">Taxable income – no lease</span>
+      <span id="tiNo"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Total tax (incl. Medicare) – no lease</span>
+      <span id="taxNo"></span>
+    </div>
+    <hr>
+    <div class="result-row">
+      <span class="result-label">Taxable income – with lease</span>
+      <span id="tiWith"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Total tax (incl. Medicare) – with lease</span>
+      <span id="taxWith"></span>
+    </div>
+    <hr>
+    <div class="result-row">
+      <span class="result-label">Tax saved from lease</span>
+      <span id="taxSaved"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Approx GST benefit on running costs</span>
+      <span id="gstSaved"></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Net benefit (tax + GST − lease cost)</span>
+      <span id="netBenefit"></span>
+    </div>
+  </div>
+
+  <script>
+    function incomeTax(ti) {
+      if (ti <= 18200) return 0;
+      if (ti <= 45000) return (ti - 18200) * 0.16;
+      if (ti <= 135000) return 4288 + (ti - 45000) * 0.30;
+      if (ti <= 190000) return 31288 + (ti - 135000) * 0.37;
+      return 51638 + (ti - 190000) * 0.45;
+    }
+
+    function totalTax(ti) {
+      const base = incomeTax(ti);
+      const medicare = ti * 0.02;
+      return base + medicare;
+    }
+
+    function fmt(x) {
+      return isNaN(x) ? '-' : '$' + x.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function recalc() {
+      const salary = Number(document.getElementById('salary').value) || 0;
+      const otherIncome = Number(document.getElementById('otherIncome').value) || 0;
+      const packCap = Number(document.getElementById('packCap').value) || 0;
+      const meCap = Number(document.getElementById('meCap').value) || 0;
+      const lease = Number(document.getElementById('leaseAmount').value) || 0;
+      const gstFactor = Number(document.getElementById('gstFactor').value) || 0;
+      const runningShare = Number(document.getElementById('runningShare').value) || 0;
+
+      const totalIncome = salary + otherIncome;
+
+      const tiNo = totalIncome - packCap - meCap;
+      const taxNo = totalTax(tiNo);
+
+      const tiWith = totalIncome - packCap - meCap - lease;
+      const taxWith = totalTax(tiWith);
+
+      const taxSaved = taxNo - taxWith;
+
+      const runningComponent = lease * runningShare;
+      const gstSaved = runningComponent * gstFactor;
+
+      const netBenefit = taxSaved + gstSaved - lease;
+
+      document.getElementById('tiNo').textContent = fmt(tiNo);
+      document.getElementById('taxNo').textContent = fmt(taxNo);
+      document.getElementById('tiWith').textContent = fmt(tiWith);
+      document.getElementById('taxWith').textContent = fmt(taxWith);
+      document.getElementById('taxSaved').textContent = fmt(taxSaved);
+      document.getElementById('gstSaved').textContent = fmt(gstSaved);
+      document.getElementById('netBenefit').textContent = fmt(netBenefit);
+    }
+
+    recalc();
+  </script>
+</body>
+</html>
