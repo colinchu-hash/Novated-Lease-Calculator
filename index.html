@@ -10,6 +10,8 @@
       --border: #e5e7eb;
       --bg: #f9fafb;
       --text-muted: #6b7280;
+      --card-bg: #ffffff;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -26,9 +28,9 @@
       margin: 1.25rem 0;
       padding: 1rem 1.1rem;
       border-radius: 10px;
-      background: #ffffff;
+      background: var(--card-bg);
       border: 1px solid var(--border);
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      box-shadow: var(--shadow);
     }
     label {
       display: block;
@@ -43,6 +45,7 @@
       border-radius: 6px;
       border: 1px solid var(--border);
       font-size: 0.9rem;
+      background: #fff;
     }
     input:focus, select:focus {
       outline: none;
@@ -178,7 +181,7 @@
 
   <!-- Current Car -->
   <div class="section">
-    <h2>Your Current Car (Own / Loan / Private Lease) <span class="pill">Step 3</span></h2>
+    <h2>Your Current Car <span class="pill">Step 3</span></h2>
     <div class="grid">
       <div>
         <label for="currentFuel">Fuel per year</label>
@@ -311,4 +314,103 @@
           <span id="bestNet"></span>
         </div>
         <p class="muted">
-          Optim
+          Optimiser uses your current inputs and tests different lease amounts.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function incomeTax(ti) {
+      if (ti <= 18200) return 0;
+      if (ti <= 45000) return (ti - 18200) * 0.16;
+      if (ti <= 135000) return 4288 + (ti - 45000) * 0.30;
+      if (ti <= 190000) return 31288 + (ti - 135000) * 0.37;
+      return 51638 + (ti - 190000) * 0.45;
+    }
+
+    function totalTax(ti) {
+      return incomeTax(ti) + ti * 0.02;
+    }
+
+    function fmt(x) {
+      return isNaN(x) ? '-' : '$' + x.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function clearAnnual() {
+      document.getElementById('leaseAmount').value = '';
+    }
+
+    function clearWeekly() {
+      document.getElementById('weeklyLease').value = '';
+    }
+
+    function syncFromWeekly() {
+      const w = Number(document.getElementById('weeklyLease').value);
+      if (w > 0) {
+        document.getElementById('leaseAmount').value = (w * 52).toFixed(0);
+      }
+      recalc();
+    }
+
+    function syncFromAnnual() {
+      const a = Number(document.getElementById('leaseAmount').value);
+      if (a > 0) {
+        document.getElementById('weeklyLease').value = (a / 52).toFixed(2);
+      }
+      recalc();
+    }
+
+    function getCaps(workplaceType, packCapInput, meCapInput) {
+      if (workplaceType === 'nfp') {
+        return { packCap: 15900, meCap: 2650 };
+      }
+      if (workplaceType === 'custom') {
+        return { packCap: packCapInput, meCap: meCapInput };
+      }
+      return { packCap: 0, meCap: 0 };
+    }
+
+    function computeScenario(leaseOverride) {
+      const workplaceType = document.getElementById('workplaceType').value;
+      const ecm = document.getElementById('ecmToggle').value;
+
+      const salary = Number(document.getElementById('salary').value) || 0;
+      const otherIncome = Number(document.getElementById('otherIncome').value) || 0;
+
+      const packCapInput = Number(document.getElementById('packCap').value) || 0;
+      const meCapInput = Number(document.getElementById('meCap').value) || 0;
+
+      const caps = getCaps(workplaceType, packCapInput, meCapInput);
+      const packCap = caps.packCap;
+      const meCap = caps.meCap;
+
+      const weeklyLease = Number(document.getElementById('weeklyLease').value) || 0;
+      const annualLeaseInput = Number(document.getElementById('leaseAmount').value) || 0;
+
+      const gstFactor = Number(document.getElementById('gstFactor').value) || 0;
+
+      const leaseFuel = Number(document.getElementById('leaseFuel').value) || 0;
+      const leaseRego = Number(document.getElementById('leaseRego').value) || 0;
+      const leaseService = Number(document.getElementById('leaseService').value) || 0;
+      const leaseInsurance = Number(document.getElementById('leaseInsurance').value) || 0;
+
+      const currentFuel = Number(document.getElementById('currentFuel').value) || 0;
+      const currentRego = Number(document.getElementById('currentRego').value) || 0;
+      const currentService = Number(document.getElementById('currentService').value) || 0;
+      const currentLoan = Number(document.getElementById('currentLoan').value) || 0;
+
+      const leaseRunning = leaseFuel + leaseRego + leaseService + leaseInsurance;
+
+      const lease = typeof leaseOverride === 'number'
+        ? leaseOverride
+        : (weeklyLease > 0 ? weeklyLease * 52 : annualLeaseInput);
+
+      const totalIncome = salary + otherIncome;
+
+      const tiNo = totalIncome - packCap - meCap;
+      const taxNo = totalTax(tiNo);
+
+      let preTaxDeduction;
+      if (ecm === 'on') {
+        preTaxDeduction = Math.max(lease - lease
