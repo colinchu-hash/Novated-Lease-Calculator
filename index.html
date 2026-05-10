@@ -142,6 +142,7 @@
     <p><strong>Current car annual cost:</strong> <span id="currentCost">$0</span></p>
     <p><strong>Novated lease annual cost:</strong> <span id="leaseOut">$0</span></p>
     <p><strong>Difference:</strong> <span id="diff">$0</span></p>
+    <p><strong>Impact to take‑home pay per fortnight:</strong> <span id="fortnight">$0</span></p>
 </div>
 
 <script>
@@ -184,6 +185,7 @@ const ecmModeSel = document.getElementById("ecmMode");
 const currentCostOut = document.getElementById("currentCost");
 const leaseOutOut = document.getElementById("leaseOut");
 const diffOut = document.getElementById("diff");
+const fortnightOut = document.getElementById("fortnight");
 
 /* OWNERSHIP LOGIC */
 ownershipSel.addEventListener("change", () => {
@@ -291,6 +293,9 @@ function recalc() {
     currentCostOut.innerText = `$${currentCost.toFixed(0)}`;
     leaseOutOut.innerText = `$${leaseOut.toFixed(0)}`;
     diffOut.innerText = `$${(leaseOut - currentCost).toFixed(0)}`;
+
+    let fortnightImpact = (leaseOut - currentCost) / 26;
+    fortnightOut.innerText = `$${fortnightImpact.toFixed(0)}`;
 }
 
 /* RECALC ON ALL INPUTS */
