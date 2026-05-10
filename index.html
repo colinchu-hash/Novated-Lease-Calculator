@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Novated Lease Calculator</title>
+
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -44,10 +45,12 @@
     }
 </style>
 </head>
+
 <body>
 
 <h1>Novated Lease Calculator</h1>
 
+<!-- CURRENT CAR CARD -->
 <div class="card" id="currentCarCard">
     <h2>Current Car</h2>
 
@@ -91,8 +94,12 @@
     </div>
 </div>
 
+<!-- NOVATED LEASE CARD -->
 <div class="card">
     <h2>Novated Lease</h2>
+
+    <label>Lease cost per week ($)</label>
+    <input type="number" id="leaseWeekly" />
 
     <label>Lease cost per year ($)</label>
     <input type="number" id="leaseCost" />
@@ -114,6 +121,7 @@
     </select>
 </div>
 
+<!-- COMPARISON CARD -->
 <div class="card">
     <h2>Comparison</h2>
     <p><strong>Current car annual cost:</strong> <span id="currentCost">$0</span></p>
@@ -123,80 +131,127 @@
 
 <script>
 function recalc() {
-    let fuel = +document.getElementById('fuel').value || 0;
-    let rego = +document.getElementById('rego').value || 0;
-    let service = +document.getElementById('service').value || 0;
-    let ownership = document.getElementById('ownership').value;
-    let loan = +document.getElementById('loan').value || 0;
+    let fuel = +fuelInput.value || 0;
+    let rego = +regoInput.value || 0;
+    let service = +serviceInput.value || 0;
 
-    let depOn = document.getElementById('depToggle').checked;
+    let ownership = ownershipSel.value;
+    let loan = +loanInput.value || 0;
+
+    let depOn = depToggle.checked;
     let dep = 0;
 
     if (depOn) {
-        let currValue = +document.getElementById('currValue').value || 0;
-        let life = +document.getElementById('life').value || 1;
+        let currValue = +currValueInput.value || 0;
+        let life = +lifeInput.value || 1;
         dep = currValue / life;
     }
 
     let currentCost = fuel + rego + service + dep;
-    if (ownership !== 'paid') currentCost += loan;
+    if (ownership !== "paid") currentCost += loan;
 
-    let leaseCost = +document.getElementById('leaseCost').value || 0;
-    let runCost = +document.getElementById('runCost').value || 0;
-    let isEV = document.getElementById('isEV').value;
-    let ecmMode = document.getElementById('ecmMode').value;
+    let leaseCost = +leaseAnnual.value || 0;
+    let runCost = +runCostInput.value || 0;
+    let isEV = isEVSel.value;
 
     let leaseOut = leaseCost + runCost;
-    if (isEV === 'yes') leaseOut *= 0.7;
+    if (isEV === "yes") leaseOut *= 0.7;
 
-    document.getElementById('currentCost').innerText = `$${currentCost.toFixed(0)}`;
-    document.getElementById('leaseOut').innerText = `$${leaseOut.toFixed(0)}`;
-    document.getElementById('diff').innerText = `$${(leaseOut - currentCost).toFixed(0)}`;
+    currentCostOut.innerText = `$${currentCost.toFixed(0)}`;
+    leaseOutOut.innerText = `$${leaseOut.toFixed(0)}`;
+    diffOut.innerText = `$${(leaseOut - currentCost).toFixed(0)}`;
 }
 
-// Ownership logic
-const ownershipSel = document.getElementById('ownership');
-const loanRow = document.getElementById('loanRow');
-const loanLabel = document.getElementById('loanLabel');
-ownershipSel.addEventListener('change', () => {
-    if (ownershipSel.value === 'paid') loanRow.classList.add('hidden');
-    else {
-        loanRow.classList.remove('hidden');
-        loanLabel.innerText = ownershipSel.value === 'loan' ?
-            'Loan repayments per year ($)' :
-            'Private lease payments per year ($)';
+/* ELEMENTS */
+const fuelInput = document.getElementById("fuel");
+const regoInput = document.getElementById("rego");
+const serviceInput = document.getElementById("service");
+const ownershipSel = document.getElementById("ownership");
+const loanRow = document.getElementById("loanRow");
+const loanLabel = document.getElementById("loanLabel");
+const loanInput = document.getElementById("loan");
+
+const depToggle = document.getElementById("depToggle");
+const depSection = document.getElementById("depSection");
+const currentCarCard = document.getElementById("currentCarCard");
+
+const origCostInput = document.getElementById("origCost");
+const currValueInput = document.getElementById("currValue");
+const ageInput = document.getElementById("age");
+const lifeInput = document.getElementById("life");
+
+const leaseWeekly = document.getElementById("leaseWeekly");
+const leaseAnnual = document.getElementById("leaseCost");
+const runCostInput = document.getElementById("runCost");
+const isEVSel = document.getElementById("isEV");
+const ecmModeSel = document.getElementById("ecmMode");
+
+const currentCostOut = document.getElementById("currentCost");
+const leaseOutOut = document.getElementById("leaseOut");
+const diffOut = document.getElementById("diff");
+
+/* OWNERSHIP LOGIC */
+ownershipSel.addEventListener("change", () => {
+    if (ownershipSel.value === "paid") {
+        loanRow.classList.add("hidden");
+    } else {
+        loanRow.classList.remove("hidden");
+        loanLabel.innerText =
+            ownershipSel.value === "loan"
+                ? "Loan repayments per year ($)"
+                : "Private lease payments per year ($)";
     }
     recalc();
 });
 
-// Depreciation toggle
-const depToggle = document.getElementById('depToggle');
-const depSection = document.getElementById('depSection');
-const currentCarCard = document.getElementById('currentCarCard');
-
+/* DEPRECIATION TOGGLE + GLOW */
 function removeGlow() {
-    currentCarCard.classList.remove('highlight');
-    document.removeEventListener('click', removeGlow);
+    currentCarCard.classList.remove("highlight");
+    document.removeEventListener("click", removeGlow);
 }
 
-depToggle.addEventListener('change', () => {
+depToggle.addEventListener("change", () => {
     if (depToggle.checked) {
-        depSection.classList.add('open');
-        currentCarCard.classList.add('highlight');
+        depSection.classList.add("open");
+        currentCarCard.classList.add("highlight");
+
         setTimeout(() => {
-            document.addEventListener('click', removeGlow);
+            document.addEventListener("click", removeGlow);
         }, 50);
     } else {
-        depSection.classList.remove('open');
-        currentCarCard.classList.remove('highlight');
+        depSection.classList.remove("open");
+        currentCarCard.classList.remove("highlight");
     }
     recalc();
 });
 
-// Recalc on all inputs
-Array.from(document.querySelectorAll('input, select')).forEach(el => {
-    el.addEventListener('input', recalc);
-    el.addEventListener('change', recalc);
+/* WEEKLY ↔ ANNUAL SYNC */
+leaseWeekly.addEventListener("input", () => {
+    if (leaseWeekly.value) {
+        leaseAnnual.value = (leaseWeekly.value * 52).toFixed(0);
+    }
+    recalc();
+});
+
+leaseWeekly.addEventListener("focus", () => {
+    leaseAnnual.value = "";
+});
+
+leaseAnnual.addEventListener("input", () => {
+    if (leaseAnnual.value) {
+        leaseWeekly.value = (leaseAnnual.value / 52).toFixed(2);
+    }
+    recalc();
+});
+
+leaseAnnual.addEventListener("focus", () => {
+    leaseWeekly.value = "";
+});
+
+/* RECALC ON ALL INPUTS */
+document.querySelectorAll("input, select").forEach(el => {
+    el.addEventListener("input", recalc);
+    el.addEventListener("change", recalc);
 });
 </script>
 
