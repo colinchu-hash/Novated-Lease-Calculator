@@ -50,6 +50,21 @@
 
 <h1>Novated Lease Calculator</h1>
 
+<!-- INCOME + EMPLOYER CARD -->
+<div class="card">
+    <h2>Your Income & Employer</h2>
+
+    <label>Your annual salary ($)</label>
+    <input type="number" id="salary" />
+
+    <label>Employer type</label>
+    <select id="employerType">
+        <option value="nfp">NFP / PBI / Charity</option>
+        <option value="gov">Government</option>
+        <option value="private">Private sector</option>
+    </select>
+</div>
+
 <!-- CURRENT CAR CARD -->
 <div class="card" id="currentCarCard">
     <h2>Current Car</h2>
@@ -107,10 +122,10 @@
     <label>Running costs inside lease per year ($)</label>
     <input type="number" id="runCost" />
 
-    <label>Is this an EV?</label>
-    <select id="isEV">
-        <option value="no">No</option>
-        <option value="yes">Yes</option>
+    <label>Vehicle type</label>
+    <select id="vehicleType">
+        <option value="ice">ICE (Petrol/Diesel)</option>
+        <option value="ev">EV (Electric Vehicle)</option>
     </select>
 
     <label>ECM mode</label>
@@ -130,39 +145,19 @@
 </div>
 
 <script>
-function recalc() {
-    let fuel = +fuelInput.value || 0;
-    let rego = +regoInput.value || 0;
-    let service = +serviceInput.value || 0;
-
-    let ownership = ownershipSel.value;
-    let loan = +loanInput.value || 0;
-
-    let depOn = depToggle.checked;
-    let dep = 0;
-
-    if (depOn) {
-        let currValue = +currValueInput.value || 0;
-        let life = +lifeInput.value || 1;
-        dep = currValue / life;
-    }
-
-    let currentCost = fuel + rego + service + dep;
-    if (ownership !== "paid") currentCost += loan;
-
-    let leaseCost = +leaseAnnual.value || 0;
-    let runCost = +runCostInput.value || 0;
-    let isEV = isEVSel.value;
-
-    let leaseOut = leaseCost + runCost;
-    if (isEV === "yes") leaseOut *= 0.7;
-
-    currentCostOut.innerText = `$${currentCost.toFixed(0)}`;
-    leaseOutOut.innerText = `$${leaseOut.toFixed(0)}`;
-    diffOut.innerText = `$${(leaseOut - currentCost).toFixed(0)}`;
+/* ATO TAX BRACKETS */
+function getMarginalRate(salary) {
+    if (salary <= 18200) return 0;
+    if (salary <= 45000) return 0.19;
+    if (salary <= 120000) return 0.325;
+    if (salary <= 180000) return 0.37;
+    return 0.45;
 }
 
 /* ELEMENTS */
+const salaryInput = document.getElementById("salary");
+const employerType = document.getElementById("employerType");
+
 const fuelInput = document.getElementById("fuel");
 const regoInput = document.getElementById("rego");
 const serviceInput = document.getElementById("service");
@@ -183,7 +178,7 @@ const lifeInput = document.getElementById("life");
 const leaseWeekly = document.getElementById("leaseWeekly");
 const leaseAnnual = document.getElementById("leaseCost");
 const runCostInput = document.getElementById("runCost");
-const isEVSel = document.getElementById("isEV");
+const vehicleType = document.getElementById("vehicleType");
 const ecmModeSel = document.getElementById("ecmMode");
 
 const currentCostOut = document.getElementById("currentCost");
@@ -247,6 +242,56 @@ leaseAnnual.addEventListener("input", () => {
 leaseAnnual.addEventListener("focus", () => {
     leaseWeekly.value = "";
 });
+
+/* MAIN CALCULATION */
+function recalc() {
+    let salary = +salaryInput.value || 0;
+    let mtr = getMarginalRate(salary);
+
+    let fuel = +fuelInput.value || 0;
+    let rego = +regoInput.value || 0;
+    let service = +serviceInput.value || 0;
+
+    let ownership = ownershipSel.value;
+    let loan = +loanInput.value || 0;
+
+    let depOn = depToggle.checked;
+    let dep = 0;
+
+    if (depOn) {
+        let currValue = +currValueInput.value || 0;
+        let life = +lifeInput.value || 1;
+        dep = currValue / life;
+    }
+
+    let currentCost = fuel + rego + service + dep;
+    if (ownership !== "paid") currentCost += loan;
+
+    let leaseCost = +leaseAnnual.value || 0;
+    let runCost = +runCostInput.value || 0;
+    let type = vehicleType.value;
+    let employer = employerType.value;
+    let ecmMode = ecmModeSel.value;
+
+    let gstSaving = runCost * 0.1;
+
+    let fbt = 0;
+    if (type === "ice") {
+        if (ecmMode === "forceOff") {
+            fbt = leaseCost * 0.2;
+        } else if (ecmMode === "forceOn") {
+            fbt = 0;
+        } else {
+            fbt = (employer === "nfp") ? leaseCost * 0.2 : 0;
+        }
+    }
+
+    let leaseOut = leaseCost + runCost - gstSaving + fbt;
+
+    currentCostOut.innerText = `$${currentCost.toFixed(0)}`;
+    leaseOutOut.innerText = `$${leaseOut.toFixed(0)}`;
+    diffOut.innerText = `$${(leaseOut - currentCost).toFixed(0)}`;
+}
 
 /* RECALC ON ALL INPUTS */
 document.querySelectorAll("input, select").forEach(el => {
